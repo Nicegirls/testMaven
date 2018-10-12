@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.DetailDao">
+	<resultMap type="Detail" id="detail">
+		<id property="det_id" column="det_id" />
+		<association property="service"
+			select="org.lanqiao.dao.serviceDao.selectServiceByDetail" column="det_id">
+			<id property="ser_id" column="ser_id" />
+		</association>
+	</resultMap>
+	<sql id="ite_x">
+		ite_id,ip,det_intime,det_outtime
+	</sql>
+	<select id="selectDetailById" resultType="Detail">
+		select
+		*,det_outtime-det_intime det_sumtime from detail d join item i on
+		i.ite_id=d.ite_id where d.ite_id=#{ite_id}
+	</select>
+	<select id="selectDetailByLimit" resultType="Detail">
+		select
+		* from detail d join item i on
+		i.ser_id=d.ser_id where d.ser_id=#{item.service.ser_id} and
+		date_format(d.det_outtime,'%Y%m')=date_format(#{item.ite_time},'%Y%m')
+		limit
+		#{page.mysqlStatePage},#{page.mysqlEndPage}
+	</select>
+	<select id="selectToltalRecord" resultType="int">
+		select count(det_id)
+		from detail d join item i on i.ser_id=d.ser_id where
+		d.ser_id=#{service.ser_id} and
+		date_format(d.det_outtime,'%Y%m')=date_format(#{ite_time},'%Y%m')
+	</select>
+	<select id="selectDetailByTime" resultMap="detail">
+		select
+		* from detail
+		where date_format(det_outtime,'%Y%m')=date_format(#{time},'%Y%m')
+	</select>
+</mapper>

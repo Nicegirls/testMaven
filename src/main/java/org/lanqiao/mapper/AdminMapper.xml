@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.AdminDao">
+	<!-- 根据ID查询 这个有什么用？-->
+	<select id="selectAdminById" resultType="Admin">
+		select * from admin where
+		adm_id=#{adm_id}
+	</select>
+	<!-- 登录权限验证 -->
+	<select id="loginPri" resultType="Privilege">
+	SELECT pri_id,pri_url,PRI_CLASS FROM privilege WHERE pri_id IN(
+	SELECT  DISTINCT pri_id FROM role_pri
+	WHERE role_id IN (SELECT role_id FROM admin a,adm_role ar
+    WHERE a.adm_id=ar.adm_id AND adm_account=#{adm_account} AND adm_psw=#{adm_psw}))
+	</select>
+	<select id="login" resultType="Admin">
+		select admin_id from admin where
+		adm_account=#{adm_account} and adm_psw=#{adm_psw}
+	</select>
+	<!-- 在用户添加界面显示角色名称 -->
+	<select id="showRole_Name" resultType="Role"> 
+		SELECT role_id,role_name FROM role WHERE role_id NOT IN(1)
+	</select>
+	<!-- 添加用户 -->
+	<insert id="insertAdmin" useGeneratedKeys="true" keyProperty="adm_id" parameterType="Admin">
+	INSERT INTO admin(adm_name,adm_account,adm_psw,ADM_PORTRAIT,adm_phonenum,ADM_EMAIL,ADM_CREATE_TIME)
+    VALUES(#{adm_name},#{adm_account},#{adm_psw},#{adm_portrait},#{adm_phonenum},#{adm_email},#{adm_create_time})
+    </insert>
+    <!-- 添加用户对应的角色 -->
+    <insert id="insertAdm_Role">
+    INSERT INTO adm_role(adm_id,role_id)
+	values
+	<foreach collection="list" item="Role" index="index" separator=",">
+	(#{adm_id},#{Role.role_id})
+	</foreach>
+    </insert>
+    <!-- 显示用户信息 -->
+    <resultMap type="Admin" id="showAdminResult" >
+	 <id property="adm_id"  column="adm_id"></id>
+	 <result property="adm_name"  column="adm_name"></result>
+	 <result property="adm_account"  column="adm_account"></result>
+	 <result property="admin_email"  column="admin_email"></result>
+	 <result property="adm_create_time"  column="adm_create_time"></result>
+	 <result property="per_name"  column="per_name"></result>
+	 </resultMap>
+    <select id="showAdmin" resultMap="showAdminResult">
+    SELECT DISTINCT a.adm_id,a.adm_name,a.adm_account,
+	a.adm_email,a.adm_create_time,GROUP_CONCAT(r.role_name) AS per_name
+	FROM admin a,adm_role ar,role r
+	WHERE a.adm_id=ar.adm_id AND ar.role_id=r.role_id and a.adm_id not in(1,2)
+	GROUP BY a.adm_id
+    </select>
+    <!-- 显示要修改的用户信息 -->
+	 <select id="showUpdateAdmin" resultType="Admin">
+	 SELECT adm_id,adm_name,adm_account,ADM_PHONENUM,adm_email
+     FROM admin WHERE adm_id=#{adm_id}
+	 </select>
+	 <select id="showUpdateRole_id" resultType="Role">
+	 SELECT role_id FROM adm_role WHERE adm_id=#{adm_id}
+	 </select>
+    <!-- 修改用户信息，先删除后添加(只需删除adm_role表的就行) -->
+    <delete id="deleteAdm_Role">
+    DELETE FROM adm_role WHERE adm_id=#{adm_id}
+    </delete>
+    <update id="updateAdmin">
+    UPDATE admin SET adm_name=#{adm_name},adm_phonenum=#{adm_phonenum},ADM_EMAIL=#{adm_email}
+	WHERE adm_id=#{adm_id}
+    </update>
+    <insert id="updateAdm_Role">
+    INSERT INTO adm_role(adm_id,role_id)
+	values
+	<foreach collection="list" item="Role" index="index" separator=",">
+	(#{adm_id},#{Role.role_id})
+	</foreach>
+    </insert>
+    <!-- 删除用户，先删从表再删主表 -->
+    <delete id="deleteAdmin">
+     delete from admin where adm_id=#{adm_id}
+    </delete>
+    <!-- 密码重置 -->
+    <update id="newAdm_Psw">
+		update admin set adm_psw=123456 where adm_id in(
+		<foreach collection="list" item="admin"  separator="," >  
+        #{admin.adm_id}
+    	</foreach> 
+    	)
+	</update>
+    <!-- 用户搜索 -->
+    <sql id="selectAdmin1">a.adm_id,a.adm_name,a.adm_account,a.adm_email,a.adm_create_time,per_name</sql>
+    <select id="selectAdminByMap" resultMap="showAdminResult">
+	SELECT <include refid="selectAdmin1"></include> FROM
+	(SELECT DISTINCT
+	a.adm_id,a.adm_name,a.adm_account,
+	a.adm_email,a.adm_create_time,GROUP_CONCAT(r.role_name) AS per_name
+	FROM admin a,adm_role ar,role r
+	WHERE a.adm_id=ar.adm_id AND
+	ar.role_id=r.role_id
+	GROUP BY a.adm_id) a WHERE adm_id IN
+	(SELECT DISTINCT adm_id FROM adm_role WHERE role_id IN (SELECT r.role_id FROM
+	role r LEFT JOIN role_pri rp ON r.role_id=rp.role_id 
+		<if test='privilege.pri_id!=0'>
+			WHERE rp.pri_id=#{privilege.pri_id}
+		</if>
+		)) 
+		<if test='admin.adm_name!=null and admin.adm_name!=""'>
+				and adm_name like CONCAT('%',#{admin.adm_name},'%')
+		</if>
+				and a.adm_id not in(1,2)
+	</select>
+	<!-- 主页的“个人信息”修改 -->
+	<update id="updateUser">
+		update admin set adm_name=#{adm_name},adm_phonenum=#{adm_phonenum},adm_email=#{adm_email} where adm_id=#{adm_id}
+	</update>
+    <!-- 主页的“密码”修改 -->
+    <update id="updatePswUser">
+		update admin set adm_psw=#{renewpsw} where adm_id=#{adm_id}
+	</update>
+	<!-- 显示个人主页的信息-->
+    <resultMap type="Admin" id="showUserInfo" >
+	 <id property="adm_id"  column="adm_id"></id>
+	 <result property="adm_name"  column="adm_name"></result>
+	 <result property="adm_account"  column="adm_account"></result>
+	 <result property="adm_psw"  column="adm_psw"></result>
+	 <result property="admin_phonenum"  column="admin_phonenum"></result>
+	 <result property="admin_email"  column="admin_email"></result>
+	 <result property="adm_portrait"  column="adm_portrait"></result>
+	 <result property="adm_create_time"  column="adm_create_time"></result>
+	 <result property="per_name"  column="per_name"></result>
+	 </resultMap>
+    <select id="showUserInfo" resultMap="showUserInfo">
+    SELECT DISTINCT a.adm_id,a.adm_psw,a.adm_account,a.adm_name,ADM_PHONENUM,a.adm_portrait,
+	a.adm_email,a.adm_create_time,GROUP_CONCAT(r.role_name) AS per_name
+	FROM admin a,adm_role ar,role r
+	WHERE a.adm_id=ar.adm_id AND ar.role_id=r.role_id AND adm_account=#{adm_account} AND adm_psw=#{adm_psw}
+	GROUP BY a.adm_id 
+    </select>
+    <!-- 验证账号输入是否正确 -->
+    <select id="checkAdm_Account" resultType="Admin">
+    SELECT adm_id FROM admin WHERE adm_account=#{adm_account}
+    </select>
+    <!-- 验证用户账号是否重复 -->
+    <select id="checkAccount" resultType="Admin">
+    SELECT adm_account FROM admin
+    </select>
+    <!-- 根据用户ID查找用户密码 -->
+    <select id="selectAdm_Psw" resultType="Admin">
+    SELECT adm_psw FROM admin WHERE adm_id=#{adm_id}
+    </select>
+</mapper>

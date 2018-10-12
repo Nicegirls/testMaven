@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.BillDao">
+	<resultMap type="Bill" id="bill">
+		<id property="bill_id" column="bill_id" />
+		<result property="bill_sumfee" column="bill_sumfee" />
+		<result property="bill_time" column="bill_time" />
+		<!-- <result property="bill_sumtime" column="bill_sumtime" /> -->
+		<result property="bill_way" column="bill_way" />
+		<result property="bill_status" column="bill_status" />
+		<association property="account" javaType="Account">
+			<id property="acc_id" column="acc_id" />
+			<result property="acc_name" column="acc_name" />
+			<result property="acc_account" column="acc_account" />
+			<result property="acc_idcard" column="acc_idcard" />
+			<result property="acc_telnum" column="acc_telnum" />
+		</association>
+		<association property="bill_sumtime" select="selectSumtime"
+			column="ite_sumtime">
+		</association>
+	</resultMap>
+	<sql id="getBill">
+		bill_id,acc_id,bill_sumfee,bill_month,bill_sumtime,bill_way,bill_status,bill1,bill2,bill3,bill4,bill5
+	</sql>
+	<sql id="getAcc">
+		acc_id
+		,acc_name
+		,acc_account
+		,acc_status
+		,acc_cretime
+		,acc_idcard
+		,acc_telnum
+		,acc_psw
+		,acc_email
+		,acc_rec_idcard
+		,acc_sex
+		,acc_rec_id
+		,acc_job
+		,acc_postcode
+		,acc_qq
+		,acc_address
+		,acc_otime
+		,acc_ptime
+		,acc_ip
+		,acc1
+		,acc2
+		,acc3
+		,acc4
+		,acc5
+		,acc_dtime
+	</sql>
+	<select id="selectAllBills" resultMap="bill">
+		select * from bill b left
+		join account a on a.acc_id=b.acc_id
+	</select>
+	<insert id="insertBill">
+		insert into bill
+		(acc_id,bill_time)
+		values (#{acc_id},now()
+		);
+	</insert>
+	<select id="selectBillById" resultMap="bill">
+		select * from bill b left
+		join account a on a.acc_id=b.acc_id where b.bill_id=#{bill_id}
+	</select>
+	<select id="selectBillByCon" resultMap="bill">
+		select * from bill b left
+		join account a on a.acc_id=b.acc_id
+		<where>
+			<if test='acc_idcard!=null and acc_idcard!=""'>
+				and a.acc_idcard=#{acc_idcard}
+			</if>
+			<if test='acc_name!=null and acc_name!=""'>
+			<bind name="acc_name" value="'%' + acc_name + '%'" />
+				and a.acc_name like #{acc_name}
+			</if>
+			<if test='acc_account!=null and acc_account!=""'>
+				and a.acc_account=#{acc_account}
+			</if>
+			<!-- 判断时间 -->
+			and bill_time between #{time1} and #{time2} limit #{page.mysqlStatePage},#{page.mysqlEndPage}
+		</where>
+	</select>
+	<select id="selectBillsPage" resultMap="bill">
+		select * from bill b left
+		join account a on a.acc_id=b.acc_id  limit #{page.mysqlStatePage},#{page.mysqlEndPage}
+	</select>
+	<select id="selectTotalRecord1" resultType="int">
+	select count(bill_id) from bill
+	</select>
+	<select id="selectBillByAcc" resultType="Bill">
+	select * from bill b join account a on a.acc_id=b.acc_id where a.acc_id=#{acc_id}
+	</select>
+	<select id="selectTotalRecords" resultType="int">
+		select count(bill_id) from bill b left
+		join account a on a.acc_id=b.acc_id
+		<where>
+			<if test='acc_idcard!=null and acc_idcard!=""'>
+				and a.acc_idcard=#{acc_idcard}
+			</if>
+			<if test='acc_name!=null and acc_name!=""'>
+				<!-- and a.acc_name=#{acc_name} -->
+				<bind name="acc_name" value="'%' + acc_name + '%'" />
+				and a.acc_name like #{acc_name}
+			</if>
+			<if test='acc_account!=null and acc_account!=""'>
+				and a.acc_account=#{acc_account}
+			</if>
+			<!-- 判断时间 -->
+			and bill_time between #{time1} and #{time2}
+		</where>
+	</select>
+</mapper>

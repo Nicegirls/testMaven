@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.RoleDao">
+<resultMap type="Role" id="roleResult">
+	<id property="role_id" column="role_id" />
+	<result property="role_name" column="role_name" />
+	<collection property="privileges" ofType="Privilege" column="pri_id">
+		<id property="pri_id" column="pri_id" />
+		<result property="pri_name" column="pri_name" />
+		<result property="pri_url" column="pri_url" />
+		<result property="pri_class" column="pri_class" />
+	</collection>
+</resultMap>
+<sql id="selectRoleAndPri">r.role_id,r.role_name,p.pri_id,p.pri_name,p.pri_url,p.pri_class</sql>
+<sql id="selectAllRole">role_id,role_name</sql>
+	<select id="selectRoleByRole_id"  resultMap="roleResult">
+		select <include refid="selectRoleAndPri"></include> from (select r.role_id,r.role_name,rp.pri_id 
+		from role r left join role_pri rp 
+		on r.role_id=rp.role_id where r.role_id=#{role_id}) r left join privilege p on r.pri_id=p.pri_id
+	</select>
+	<select id="selectAllRole"  resultMap="roleResult">
+		select <include refid="selectRoleAndPri"></include> from (select r.role_id,r.role_name,rp.pri_id 
+		from role r left join role_pri rp 
+		on r.role_id=rp.role_id where r.role_id not in (1)) r left join privilege p on r.pri_id=p.pri_id
+	</select>
+	<select id="fillRole"  resultType="Role">
+		select <include refid="selectAllRole"></include> from role
+	</select>
+	<delete id="deletePrivilegeFromRole">
+		delete from role_pri where role_id=#{role_id}
+	</delete>
+	<delete id="deleteRoleByRole_id">
+		delete from role where role_id=#{role_id}
+	</delete>
+	<insert id="insertPrivilegeFromRole">
+		insert into role_pri (role_id,pri_id) values 
+	 	<foreach collection="privileges" item="privilege"  separator="," >  
+        (#{role_id},#{privilege.pri_id}) 
+    	</foreach> 
+	</insert>
+	<update id="updateRole">
+		update role set role_name=#{role_name} where role_id=#{role_id}
+	</update>
+	<insert id="insertRole" useGeneratedKeys="true" keyProperty="role_id" parameterType="Role">  
+    insert into role(role_name)  
+    values(#{role_name})  
+	</insert> 
+	<select id="check" resultType="Role">
+		select role_id from role where role_name=#{role_name}
+	</select>
+	<select id="delCheck" resultType="Admin">
+		select adm_id from adm_role where role_id=#{role_id}
+	</select>
+</mapper>

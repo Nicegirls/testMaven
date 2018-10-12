@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.AccountDao">
+	<sql id="select_account">
+		acc_id,acc_name,acc_account,acc_status,acc_cretime,acc_idcard,acc_telnum,acc_psw,
+		acc_email,acc_rec_idcard,acc_sex,acc_rec_id,acc_job,acc_postcode,acc_qq,acc_address,
+		acc_otime,acc_ptime,acc_dtime,acc_ip
+	</sql>
+	<!-- 页面初始化 -->
+	<select id="selectAllAccounts" resultType="Account">
+		select <include refid="select_account"></include> from account 
+		<where>
+			<if test="acc_idcard!=null and acc_idcard!=''">
+				and acc_idcard=#{acc_idcard}
+			</if>
+			<if test="acc_name!=null and acc_name!=''">
+				and acc_name=#{acc_name}
+			</if>
+			<if test="acc_account!=null and acc_account!=''">
+				and acc_account=#{acc_account}
+			</if>
+			<if test="acc_status!=-1">
+				and acc_status=#{acc_status}
+			</if>
+		</where>
+	</select>
+	<sql id="add_account">
+		acc_name,acc_account,acc_status,acc_cretime,acc_idcard,acc_telnum,acc_psw,
+		acc_email,acc_rec_idcard,acc_sex,acc_job,acc_postcode,acc_qq,acc_address,
+		acc_otime
+	</sql>
+	<sql id="add_account1">
+		#{acc_name},#{acc_account},#{acc_status},#{acc_cretime},#{acc_idcard},
+		#{acc_telnum},#{acc_psw},#{acc_email},#{acc_rec_idcard},#{acc_sex},#{acc_job},
+		#{acc_postcode},#{acc_qq},#{acc_address},#{acc_otime}
+	</sql>
+	<insert id="insertAccount" >
+			insert into account(<include refid="add_account"></include>) 
+		values(<include refid="add_account1"></include>)
+	</insert>
+	<delete id="deleteAccount">
+		update account set acc_status=#{acc_status},acc_dtime=#{acc_dtime} where acc_id=#{acc_id}
+	</delete>
+	<select id="selectAccountByID" resultType="Account">
+		select <include refid="select_account"></include> from account where acc_id=#{acc_id}
+	</select>
+	<update id="updateAccountState">
+		update account set acc_status=#{acc_status},acc_ptime=#{acc_ptime} where acc_id=#{acc_id}
+	</update>
+	<update id="updateAccountState1">
+		update account set acc_status=#{acc_status},acc_otime=#{acc_otime} where acc_id=#{acc_id}
+	</update>
+	<select id="selectAccountByIDCard" resultType="Account">
+		select <include refid="select_account"></include> from account
+		<where>
+		 	acc_idcard=#{acc_idcard}
+		 	<if test="acc_status!=3">
+		 		and acc_status=#{acc_status}
+		 	</if>
+		</where>
+	</select>
+	<sql id="update_account">
+		acc_name=#{acc_name},acc_telnum=#{acc_telnum},
+		acc_email=#{acc_email},acc_rec_idcard=#{acc_rec_idcard},
+		acc_sex=#{acc_sex},acc_job=#{acc_job},acc_postcode=#{acc_postcode},
+		acc_qq=#{acc_qq},acc_address=#{acc_address},acc_psw=#{acc_psw}
+	</sql>
+	<update id="updateAllAccount">
+		update account set <include refid="update_account"></include> where acc_id=#{acc_id} 
+	</update>
+	<!-- 条件查询 -->
+	<select id="selectAccountByCondition" resultType="Account">
+		select <include refid="select_account"></include> from account
+		<where>
+			<if test="account.acc_idcard!=null and account.acc_idcard!=''">
+				and acc_idcard=#{account.acc_idcard}
+			</if>
+			<if test="account.acc_name!=null and account.acc_name!=''">
+				and acc_name=#{account.acc_name}
+			</if>
+			<if test="account.acc_account!=null and account.acc_account!=''">
+				and acc_account=#{account.acc_account}
+			</if>
+			<if test="account.acc_status!=-1">
+				and acc_status=#{account.acc_status}
+			</if>
+		</where>
+		limit #{start},#{pageSize}
+	</select>
+</mapper>

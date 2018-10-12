@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.ItemDao">
+	<sql id="getItem">
+		ite_id
+		,ser_id
+		,bill_id
+		,fee_id
+		,ite_fee
+		,ite1
+		,ite2
+		,ite3
+		,ite4
+		,ite5
+	</sql>
+	<resultMap type="Item" id="item">
+		<id property="ite_id" column="ite_id" />
+		<result property="ite_fee" column="ite_fee" />
+		<result property="ite_time" column="ite_time"/>
+		<association property="service" javaType="Service">
+			<id property="ser_id" column="ser_id" />
+			<result property="ser_ip" column="ser_ip" />
+			<result property="acc_id" column="acc_id" />
+			<result property="ser_os" column="ser_os" />
+			<result property="ser_psw" column="ser_psw" />
+			<result property="ser_status" column="ser_status" />
+			<result property="ser_cretime" column="ser_cretime" />
+			<result property="ser_otime" column="ser_otime" />
+		</association>
+		<association property="fee" javaType="Fee">
+			<id property="fee_id" column="fee_id" />
+			<result property="fee_name" column="fee_name" />
+			<result property="fee_type" column="fee_type" />
+			<result property="fee_btime" column="fee_btime" />
+			<result property="fee_utime" column="fee_utime" />
+			<result property="fee_ufee" column="fee_ufee" />
+			<result property="fee_bfee" column="fee_bfee" />
+		</association>
+		<association property="ite_sumtime" select="selectSumtime"
+			column="ser_id">
+		</association>
+	</resultMap>
+	<select id="selectItemByBill" resultMap="item">
+		select * from item i
+		left join service s on s.ser_id=i.ser_id join fee
+		f on
+		f.fee_id=i.fee_id join bill b on i.bill_id=b.bill_id
+		 where i.bill_id=#{bill_id}
+	</select>
+	<!-- 查询item总时长 -->
+	<select id="selectSumtime" resultType="long">
+		SELECT
+		(SUM(b1.det_sumtime)) FROM detail
+		b1 LEFT JOIN item
+		b2 ON
+		b1.ser_id=b2.ser_id LEFT JOIN bill b3 ON
+		b2.bill_id=b3.bill_id
+		WHERE
+		b2.ser_id=#{ser_id} and
+		date_format(ite_time,'%Y%m')=date_format(det_outtime,'%Y%m')
+	</select>
+	<insert id="insertItem">
+		insert into item (ser_id,bill_id,fee_id,ite_time)
+		values(#{service.ser_id},#{bill.bill_id},#{fee.fee_id},now())
+	</insert>
+	<select id="selectItemByBillLimit" resultMap="item">
+		select * from item
+		i
+		left join service s on s.ser_id=i.ser_id join fee
+		f on
+		f.fee_id=i.fee_id join bill b on i.bill_id=b.bill_id and
+		date_format(ite_time,'%Y%m')=date_format(bill_time,'%Y%m') where
+		i.bill_id=#{bill.bill_id} limit
+		#{page.mysqlStatePage},#{page.mysqlEndPage}
+	</select>
+	<select id="selectToltalRecord" resultType="int">
+		select count(ite_id)
+		from item i
+		left join service s on s.ser_id=i.ser_id join fee
+		f on
+		f.fee_id=i.fee_id join bill b on i.bill_id=b.bill_id and
+		date_format(ite_time,'%Y%m')=date_format(bill_time,'%Y%m') where
+		i.bill_id=#{bill_id}
+	</select>
+	<update id="updateItemSumFee">
+			update item
+			<set>
+				ite_fee1=#{ite_fee}
+			</set>
+			where ite_id=#{ite_id}
+	</update>
+	<select id="selectAllItem" resultMap="item">
+		select * from item i
+		left join service s on s.ser_id=i.ser_id join fee
+		f on 
+		f.fee_id=i.fee_id join bill b on i.bill_id=b.bill_id
+	</select>
+	<select id="selectSerByIte" resultMap="item">
+	select * from item where ite_id=#{ite_id}
+	</select>
+</mapper>

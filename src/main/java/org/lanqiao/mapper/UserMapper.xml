@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.UserDao">
+	<resultMap type="User" id="user">
+		<id property="det_id" column="det_id" />
+		<result property="det_sumtime" column="det_sumtime" />
+		<result property="det_htime" column="det_htime" />
+		<association property="fee" javaType="Fee">
+			<id property="fee_id" column="fee_id" />
+			<result property="fee_name" column="fee_name" />
+			<result property="fee_type" column="fee_type" />
+			<result property="fee_btime" column="fee_btime" />
+			<result property="fee_utime" column="fee_utime" />
+			<result property="fee_ufee" column="fee_ufee" />
+			<result property="fee_bfee" column="fee_bfee" />
+		</association>
+	</resultMap>
+	<resultMap type="User" id="login">
+		<id property="det_id" column="det_id" />
+		<association property="det_htime"
+			select="org.lanqiao.dao.UserDao.selectTotaltime" column="ser_os">
+		</association>
+	</resultMap>
+	<select id="login" resultMap="login">
+		select * from service where
+		ser_os=#{ser_os} and ser_psw=#{ser_psw}
+	</select>
+	<insert id="insertDetail" useGeneratedKeys="true" keyProperty="det_id"
+		parameterType="User">
+		INSERT INTO `detail` (`SER_ID`, `IP`,
+		`DET_INTIME`,`DET_OUTTIME`) VALUES
+		(#{ser_id},#{ser_ip},now(),now())
+	</insert>
+	<update id="logout">
+		UPDATE detail SET
+		det_outtime=NOW(),det_fee=#{det_fee},det1=#{det1} WHERE
+		det_id=#{det_id}
+	</update>
+	<select id="selectUserById" resultMap="user">
+		SELECT d.*,f.* FROM detail
+		d JOIN service s ON s.ser_id=d.ser_id JOIN fee f
+		ON f.fee_id=s.fee_id
+		WHERE det_id=#{det_id}
+	</select>
+	<update id="updateDetFee">
+		update detail set det_fee=#{det_fee} where
+		det_id=#{det_id}
+	</update>
+	<select id="selectTotaltime" resultType="long">
+		SELECT SUM(det_sumtime) DET_HTIME FROM detail d JOIN service s ON
+		d.ser_id=s.ser_id WHERE s.ser_os=#{ser_os} AND
+		DATE_FORMAT(NOW(),'%Y%m')=DATE_FORMAT(d.det_outtime,'%Y%m')
+	</select>
+</mapper>

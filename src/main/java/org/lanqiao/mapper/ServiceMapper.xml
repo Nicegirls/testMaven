@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.ServiceDao">
+	<sql id="allColumns">ser_id,fee_id,acc_id,ser_ip,ser_os,ser_psw,ser_status,ser_cretime,ser_otime,ser_ptime,ser_dtime,
+		ser1,ser2
+	</sql>
+	<resultMap type="Service" id="Service1">
+		<id property="ser_id" column="ser_id" />
+		<result property="fee_id" column="fee_id" />
+		<result property="acc_id" column="acc_id" />
+		<result property="ser_ip" column="ser_ip" />
+		<result property="ser_os" column="ser_os" />
+		<result property="ser_psw" column="ser_psw" />
+		<result property="ser_status" column="ser_status" />
+		<result property="ser_cretime" column="ser_cretime" />
+		<result property="ser_otime" column="ser_otime" />
+		<result property="ser_ptime" column="ser_ptime" />
+		<result property="ser_dtime" column="ser_dtime" />
+
+		<association property="fee"
+			select="org.lanqiao.dao.FeeDao.selectFeeByID" column="fee_id">
+			<id property="fee_id" column="fee_id" />
+			<result property="fee_name" column="fee_name" />
+			<result property="fee_type" column="fee_type" />
+
+			<result property="fee_btime" column="fee_btime" />
+			<result property="fee_bfee" column="fee_bfee" />
+			<result property="fee_ufee" column="fee_ufee" />
+
+			<result property="fee_cretime" column="fee_cretime" />
+			<result property="fee_otime" column="fee_otime" />
+			<result property="fee_status" column="fee_status" />
+			<result property="fee_desc" column="fee_desc" />
+
+		</association>
+		<association property="account"
+			select="org.lanqiao.dao.AccountDao.selectAccountByID" column="acc_id">
+			<id property="acc_id" column="acc_id" />
+			<result property="acc_name" column="acc_name" />
+			<result property="acc_account" column="acc_account" />
+			<result property="acc_status" column="acc_status" />
+			<result property="acc_cretime" column="acc_cretime" />
+			<result property="acc_idcard" column="acc_idcard" />
+			<result property="acc_email" column="acc_email" />
+			<result property="acc_rec_idcard" column="acc_rec_idcard" />
+			<result property="acc_sex" column="acc_sex" />
+			<result property="acc_rec_id" column="acc_rec_id" />
+			<result property="acc_job" column="acc_job" />
+			<result property="acc_postcode" column="acc_postcode" />
+			<result property="acc_qq" column="acc_qq" />
+			<result property="acc_address" column="acc_address" />
+			<result property="acc_otime" column="acc_otime" />
+			<result property="acc_ptime" column="acc_ptime" />
+			<result property="acc_dtime" column="acc_dtime" />
+			<result property="acc_ip" column="acc_ip" />
+		</association>
+	</resultMap>
+	<select id="selectAllService" resultMap="Service1">
+		select
+		<include refid="allColumns"></include>
+		from service
+	</select>
+
+	<insert id="insertService" useGeneratedKeys="true" keyProperty="ser_id">
+		insert into
+		service(acc_id,fee_id,ser_ip,ser_os,ser_psw,ser_status,ser_cretime)
+		values(#{acc_id},#{fee_id},#{ser_ip},
+		#{ser_os},#{ser_psw},1,now())
+	</insert>
+
+	<update id="updateServiceFeeID">
+		update service set fee_id=#{fee_id} where
+		ser_id=#{ser_id}
+	</update>
+
+	<select id="selectServiceByID" resultMap="Service1">
+		select
+		<include refid="allColumns"></include>
+		from service where ser_id=#{ser_id}
+	</select>
+	<select id="selectServiceByOs" resultMap="Service1">
+		select
+		<include refid="allColumns"></include>
+		from service where ser_os=#{ser_os}
+	</select>
+	
+	
+	
+	<select id="selectServiceByItem" resultMap="Service1">
+		select
+		s.ser_id,s.fee_id,s.acc_id,s.ser_ip,s.ser_os,s.ser_psw,s.ser_status,s.ser_cretime,s.ser_otime,s.ser_ptime,s.ser_dtime,s.ser1,s.ser2,s.ser3,s.ser4,s.ser5
+		from service s JOIN item i ON i.SER_ID=s.SER_ID where
+		i.ite_id=#{ite_id}
+	</select>
+	<!-- 通过业务ID修改状态 -->
+	<update id="deleteServiceByID">
+		update service set ser_status=0,ser_dtime=now() where ser_id=#{ser_id}
+	</update>
+	
+	<update id="openServiceByID">
+		update service set ser_status=1,ser_otime=now() where ser_id=#{ser_id}
+	</update>
+	
+	<update id="stopServiceByID">
+		update service set ser_status=2,ser_ptime=now() where ser_id=#{ser_id}
+	</update>
+	<!-- 通过账务id修改状态 -->
+	<update id="deleteServiceByID1">
+		update service set ser_status=0,ser_dtime=now() where acc_id=#{acc_id}
+	</update>
+	<update id="openServiceByID1">
+		update service set ser_status=1,ser_otime=now() where acc_id=#{acc_id}
+	</update>
+	<update id="stopServiceByID1">
+		update service set ser_status=2,ser_ptime=now() where acc_id=#{acc_id}
+	</update>
+	
+	<select id="selectServiceByCondition" resultMap="Service1">
+		select * from service
+		<where>
+			<if test='ser_status!=-1'>
+				and ser_status=#{ser_status}
+			</if>
+			<if test='ser_os!="" and ser_os!=null'>
+				and ser_os=#{ser_os}
+			</if>
+			<if test='ser_ip!="" and ser_ip!=null'>
+				and ser_ip=#{ser_ip}
+			</if>
+			<if test="acc_id!=0">
+				and acc_id=#{acc_id}
+			</if>
+		</where>
+	</select>
+	
+	<select id="selectServiceByPaging" resultMap="Service1">
+		select * from service 
+		<where>
+			<if test='service.ser_status!=-1'>
+				and ser_status=#{service.ser_status}
+			</if>
+			<if test='service.ser_os!="" and service.ser_os!=null'>
+				and ser_os=#{service.ser_os}
+			</if>
+			<if test='service.ser_ip!="" and service.ser_ip!=null'>
+				and ser_ip=#{service.ser_ip}
+			</if>
+			<if test="service.acc_id!=0">
+				and acc_id=#{service.acc_id}
+			</if>
+		</where>
+		limit #{startSize},#{pageSize}
+	</select>
+	
+	<select id="selectServiceByDetail" resultType="Service">
+	select * from service s join detail d on d.ser_id=s.ser_id where d.det_id=#{det_id}
+	</select>
+</mapper>

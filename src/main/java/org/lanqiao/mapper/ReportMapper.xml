@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.ReportDao">
+	<resultMap type="Report" id="report">
+		<association property="bill_sumtime" select="org.lanqiao.dao.ReportDao.selectToltalTime" column="bill_id">
+		</association>
+	</resultMap>
+	<select id="selectAllReports" resultMap="report">
+		select
+		acc_id,acc_account,acc_name,acc_idcard,acc_telnum,bill_time,bill_id,bill_sumtime2
+		from report
+	</select>
+	<select id="selectReportLimit" resultMap="report">
+		select
+		acc_id,acc_account,acc_name,acc_idcard,acc_telnum,bill_time,bill_id,bill_sumtime2
+		from report limit #{mysqlStatePage},#{mysqlEndPage}
+	</select>
+	<select id="selectToltalRecord" resultType="int">
+		select count(acc_id)
+		from report;
+	</select>
+	<select id="selectUsage" resultType="Usage">
+		SELECT * FROM fee_usage
+	</select>
+
+	<select id="selectToltalTime" resultType="double">
+		SELECT
+		SUM(b1.det_outtime-b1.det_intime)/10000 FROM
+		detail
+		b1 LEFT JOIN item b2 ON b1.ser_id=b2.ser_id LEFT JOIN
+		bill b3 ON
+		b2.bill_id=b3.bill_id left join account c on
+		b3.acc_id=c.acc_id where
+		DATE_FORMAT(b1.DET_OUTTIME,'%Y%m')=DATE_FORMAT(b3.BILL_TIME,'%Y%m')
+		AND b3.bill_id=#{bill_id}
+	</select>
+</mapper>

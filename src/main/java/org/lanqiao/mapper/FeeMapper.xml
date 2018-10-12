@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.lanqiao.dao.FeeDao">
+	<sql id="allColumns">fee_id,fee_name,fee_type,fee_btime,fee_bfee,fee_ufee,fee_desc,fee_cretime,fee_otime,fee_status</sql>
+	<!-- 根据ID查询 -->
+	<select id="selectFeeByID" resultType="Fee">
+		select <include refid="allColumns"></include> from fee where
+		fee_id=#{fee_id}
+	</select>
+	<select id="getAllFees" resultType="Fee">
+		select <include refid="allColumns"></include> from fee
+	</select>
+	<select id="getAllFeesByState" resultType="Fee">
+		select <include refid="allColumns"></include> from fee where fee_status=1
+	</select>
+	<select id="getAllFeesMap" resultType="Fee">
+		select <include refid="allColumns"></include> from fee 
+		limit #{page.mysqlStatePage},#{page.mysqlEndPage}
+	</select>
+	<delete id="deleteFee">
+		delete from fee where fee_id=#{fee_id}
+	</delete>
+	<sql id="insertFee">fee_name,fee_type,fee_btime,fee_bfee,fee_ufee,fee_desc,fee_cretime,fee_status</sql>
+	<insert id="insertFee">
+		insert into fee(<include refid="insertFee"></include>) values(#{fee_name},#{fee_type},#{fee_btime},#{fee_bfee},#{fee_ufee},#{fee_desc},#{fee_cretime},#{fee_status})
+	</insert>
+	<update id="updateFee">
+		update fee set fee_name=#{fee_name},fee_type=#{fee_type},fee_btime=#{fee_btime},fee_bfee=#{fee_bfee},fee_ufee=#{fee_ufee},fee_desc=#{fee_desc} where fee_id=#{fee_id}
+	</update>
+	<update id="updateFeeState">
+		update fee set fee_status=#{fee_status},fee_otime=#{fee_otime} where fee_id=#{fee_id}
+	</update>
+	
+	<select id="idModiFee">
+		select * from fee where fee_id=#{fee_id}
+	</select>
+	<select id="sortFee" resultType="Fee">
+		select <include refid="allColumns"></include> from fee
+		<if test='term!=null and term!=""'>
+			order by ${term} 
+		</if>
+		<if test='sort!=null and sort!=""'>
+			${sort}
+		</if>
+		 limit #{page.mysqlStatePage},#{page.mysqlEndPage}
+	</select>
+	<select id="countFee" resultType="int">
+		select count(fee_id) from fee;
+	</select>
+	
+	<update id="">
+		update fee set fee_stime=#{fee_stime},fee_state=#{fee_state} where fee_id=#{fee_id}
+	</update>
+	<select id="check" resultType="Fee">
+		select fee_id from fee where fee_name=#{fee_name}
+	</select>
+</mapper>
